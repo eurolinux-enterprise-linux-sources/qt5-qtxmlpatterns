@@ -1,31 +1,37 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 The Qt Company Ltd.
-** Contact: http://www.qt.io/licensing/
+** Copyright (C) 2016 The Qt Company Ltd.
+** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the QtXmlPatterns module of the Qt Toolkit.
 **
-** $QT_BEGIN_LICENSE:LGPL21$
+** $QT_BEGIN_LICENSE:LGPL$
 ** Commercial License Usage
 ** Licensees holding valid commercial Qt licenses may use this file in
 ** accordance with the commercial license agreement provided with the
 ** Software or, alternatively, in accordance with the terms contained in
 ** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see http://www.qt.io/terms-conditions. For further
-** information use the contact form at http://www.qt.io/contact-us.
+** and conditions see https://www.qt.io/terms-conditions. For further
+** information use the contact form at https://www.qt.io/contact-us.
 **
 ** GNU Lesser General Public License Usage
 ** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 2.1 or version 3 as published by the Free
-** Software Foundation and appearing in the file LICENSE.LGPLv21 and
-** LICENSE.LGPLv3 included in the packaging of this file. Please review the
-** following information to ensure the GNU Lesser General Public License
-** requirements will be met: https://www.gnu.org/licenses/lgpl.html and
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** General Public License version 3 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL3 included in the
+** packaging of this file. Please review the following information to
+** ensure the GNU Lesser General Public License version 3 requirements
+** will be met: https://www.gnu.org/licenses/lgpl-3.0.html.
 **
-** As a special exception, The Qt Company gives you certain additional
-** rights. These rights are described in The Qt Company LGPL Exception
-** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 2.0 or (at your option) the GNU General
+** Public license version 3 or any later version approved by the KDE Free
+** Qt Foundation. The licenses are as published by the Free Software
+** Foundation and appearing in the file LICENSE.GPL2 and LICENSE.GPL3
+** included in the packaging of this file. Please review the following
+** information to ensure the GNU General Public License requirements will
+** be met: https://www.gnu.org/licenses/gpl-2.0.html and
+** https://www.gnu.org/licenses/gpl-3.0.html.
 **
 ** $QT_END_LICENSE$
 **
@@ -99,7 +105,7 @@ int XQueryTokenizer::peekForColonColon() const
             {
                 if (peekAhead((pos - m_pos) + 1) == ':')
                     return pos - m_pos;
-                /* Fallthrough. */
+                Q_FALLTHROUGH();
             }
             default:
                 return -1;
@@ -161,7 +167,7 @@ QString XQueryTokenizer::normalizeEOL(const QString &input,
                 if (i + 1 < len && input.at(i + 1) == QLatin1Char('\n'))
                     ++i;
 
-                /* Else, fallthrough. */
+                Q_FALLTHROUGH();
             }
             case '\n':
             {
@@ -217,7 +223,6 @@ Tokenizer::TokenType XQueryTokenizer::consumeComment()
                 break;
             }
             case '\n':
-            /* Fallthrough. */
             case '\r':
             {
                 /* We want to count \r\n as a single line break. */
@@ -297,6 +302,7 @@ Tokenizer::TokenType XQueryTokenizer::consumeWhitespace()
                     else
                         return comment;
                 }
+                Q_FALLTHROUGH();
             }
             default:
                 return T_SUCCESS;
@@ -759,7 +765,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
     switch(state())
     {
         case XMLSpaceDecl:
-        /* Fallthrough. */
         case NamespaceKeyword:
         {
             switch(peekCurrent())
@@ -767,7 +772,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                 case ',':
                     return tokenAndAdvance(T_COMMA);
                 case '"':
-                /* Fallthrough. */
                 case '\'':
                 {
                     setState(NamespaceDecl);
@@ -786,7 +790,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                 switch(keyword->token)
                 {
                     case T_INHERIT:
-                    /* Fallthrough. */
                     case T_NO_INHERIT:
                     {
                         setState(Default);
@@ -798,9 +801,7 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                         break;
                     }
                     case T_ORDERED:
-                    /* Fallthrough. */
                     case T_UNORDERED:
-                    /* Fallthrough. */
                     case T_STRIP:
                     {
                         setState(Default);
@@ -810,6 +811,7 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                     {
                         if (state() != NamespaceKeyword)
                             setState(Default);
+                        break;
                     }
                     default:
                         break;
@@ -819,8 +821,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
             }
             else
                 return id;
-
-            Q_ASSERT(false);
         }
         case NamespaceDecl:
         {
@@ -831,7 +831,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                 case ';':
                     return tokenAndChangeState(T_SEMI_COLON, Default);
                 case '\'':
-                /* Fallthrough. */
                 case '\"':
                     return tokenizeStringLiteral();
             }
@@ -847,8 +846,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                 return tokenAndChangeState(t->token, Default, 0);
             else
                 return nc;
-
-            Q_ASSERT(false);
         }
         case Axis:
         {
@@ -859,15 +856,14 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                 setState(AfterAxisSeparator);
                 return Token(T_COLONCOLON);
             }
-            /* Fallthrough. */
+            Q_FALLTHROUGH();
         }
         case AfterAxisSeparator:
-        /* Fallthrough. */
         case Default:
            /* State Operator and state Default have a lot of tokens in common except
             * for minor differences. So we treat them the same way, and sprinkles logic
             * here and there to handle the small differences. */
-        /* Fallthrough. */
+            Q_FALLTHROUGH();
         case Operator:
         {
             switch(peekCurrent())
@@ -922,7 +918,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                         return tokenAndChangeState(T_DOT, Operator);
                 }
                 case '\'':
-                /* Fallthrough. */
                 case '"':
                 {
                     setState(Operator);
@@ -992,6 +987,7 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                                 return tokenAndChangeState(T_COMMENT_START, XMLComment);
                             }
                             /* Fallthrough. It's a syntax error, and this is a good way to report it. */
+                            Q_FALLTHROUGH();
                         }
                         default:
                         {
@@ -1284,7 +1280,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                     switch(keyword2->token)
                     {
                         case T_VARIABLE:
-                        /* Fallthrough. */
                         case T_FUNCTION:
                         {
                             m_tokenStack.push(Token(keyword2->token));
@@ -1298,7 +1293,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                             return Token(keyword->token);
                         }
                         case T_COPY_NAMESPACES:
-                        /* Fallthrough. */
                         case T_ORDERING:
                         {
                             m_tokenStack.push(Token(keyword2->token));
@@ -1313,7 +1307,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                             return Token(keyword->token);
                         }
                         case T_NAMESPACE:
-                        /* Fallthrough. */
                         case T_BASEURI:
                         {
                             m_tokenStack.push(Token(keyword2->token));
@@ -1393,7 +1386,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                     switch(keyword2->token)
                     {
                         case T_SCHEMA:
-                        /* Fallthrough. */
                         case T_MODULE:
                         {
                             setState(NamespaceKeyword);
@@ -1432,9 +1424,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                     return id;
                 }
             }
-
-            Q_ASSERT(false);
-
         }
         case VarName:
         {
@@ -1443,7 +1432,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
 
             setState(Operator);
             return tokenizeNCNameOrQName();
-            Q_ASSERT(false);
         }
         case ItemType:
         {
@@ -1480,7 +1468,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                     return name;
                 }
             }
-            Q_ASSERT(false);
         }
         case KindTest:
         {
@@ -1500,7 +1487,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                 case '?':
                     return tokenAndAdvance(T_QUESTION);
                 case '\'':
-                /* Fallthrough. */
                 case '"':
                     return tokenizeStringLiteral();
             }
@@ -1526,7 +1512,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
             }
             else
                 return nc;
-            Q_ASSERT(false);
         }
         case KindTestForPI:
         {
@@ -1538,13 +1523,11 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                     return tokenAndAdvance(T_RPAREN);
                 }
                 case '\'':
-                /* Fallthrough. */
                 case '"':
                     return tokenizeStringLiteral();
                 default:
                     return tokenizeNCName();
             }
-            Q_ASSERT(false);
         }
         case OccurrenceIndicator:
         {
@@ -1562,14 +1545,12 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                     return nextToken();
                 }
             }
-            Q_ASSERT(false);
         }
         case XQueryVersion:
         {
             switch(peekCurrent())
             {
                 case '\'':
-                /* Fallthrough. */
                 case '"':
                     return tokenizeStringLiteral();
                 case ';':
@@ -1586,7 +1567,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                 return tokenAndChangeState(keyword->token, Default);
             else
                 return id;
-            Q_ASSERT(false);
         }
         case StartTag:
         {
@@ -1636,10 +1616,8 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                 default:
                     return tokenizeNCNameOrQName();
             }
-            Q_ASSERT(false);
         }
         case AposAttributeContent:
-        /* Fallthrough. */
         case QuotAttributeContent:
         {
             const QChar sep(state() == AposAttributeContent ? QLatin1Char('\'') : QLatin1Char('"'));
@@ -1685,19 +1663,15 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                     const QChar next(m_data.at(m_pos + 1));
                     if (!next.isSpace() && next != QLatin1Char('/') && next != QLatin1Char('>'))
                         return Token(T_ERROR); // i18n Space must separate attributes
-                    else if (result.isEmpty())
+
+                    if (result.isEmpty())
                     {
                         return tokenAndChangeState(state() == AposAttributeContent ? T_APOS : T_QUOTE,
                                                    StartTag, 1);
                     }
-                    else
-                    {
-                        /* Don't consume the sep, but leave it so we next time return a token for it. */
-                        return Token(T_STRING_LITERAL, result);
-                    }
 
-                    ++m_pos;
-                    continue;
+                    /* Don't consume the sep, but leave it so we next time return a token for it. */
+                    return Token(T_STRING_LITERAL, result);
                 }
                 else if (curr == QLatin1Char('{'))
                 {
@@ -1762,9 +1736,9 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                                 ++m_pos;
                                 break;
                             }
+                            Q_FALLTHROUGH();
                         }
                         case 0xA:
-                        /* Fallthrough. */
                         case 0x9:
                         {
                             result.append(QLatin1Char(' '));
@@ -1777,7 +1751,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
 
                 ++m_pos;
             }
-            Q_ASSERT(false);
         }
         case ElementContent:
         {
@@ -1915,7 +1888,7 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                         /* We want to translate \r\n into \n. */
                         if (peekAhead(-1) == '\r')
                             break;
-                        /* else, fallthrough. */
+                        Q_FALLTHROUGH();
                     }
                     case '\r':
                     {
@@ -1930,7 +1903,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                 }
                 ++m_pos;
             }
-            Q_ASSERT(false);
         }
         case ProcessingInstructionName:
         {
@@ -1949,7 +1921,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                                                ProcessingInstructionContent);
                 }
             }
-            Q_ASSERT(false);
         }
         case ProcessingInstructionContent:
         {
@@ -1968,7 +1939,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                 popState();
                 return Token(T_PI_CONTENT, normalizeEOL(m_data.mid(start, len), CharacterSkips()));
             }
-            Q_ASSERT(false);
         }
         case EndTag:
         {
@@ -1982,7 +1952,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
             }
             else
                 return tokenizeNCNameOrQName();
-            Q_ASSERT(false);
         }
         case XMLComment:
         {
@@ -2004,7 +1973,6 @@ Tokenizer::Token XQueryTokenizer::nextToken()
                 else
                     return error();
             }
-            Q_ASSERT(false);
         }
         case Pragma:
         {
@@ -2186,9 +2154,7 @@ Tokenizer::Token XQueryTokenizer::nextToken(YYLTYPE *const sourceLocator)
         switch(retval.type)
         {
             case T_MODULE:
-            /* Fallthrough.*/
             case T_SCHEMA:
-            /* Fallthrough.*/
             case T_COPY_NAMESPACES:
             {
                 setState(NamespaceKeyword);
@@ -2200,7 +2166,6 @@ Tokenizer::Token XQueryTokenizer::nextToken(YYLTYPE *const sourceLocator)
                 break;
             }
             case T_AS:
-            /* Fallthrough. */
             case T_OF:
             {
                 setState(ItemType);

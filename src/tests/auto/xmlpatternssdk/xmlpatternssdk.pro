@@ -19,7 +19,7 @@ mac {
 QT      += xmlpatterns xml network testlib gui
 
 DESTDIR    = $$QT.xmlpatterns.libs
-!wince*:DLLDESTDIR = $$QT.xmlpatterns.bins
+DLLDESTDIR = $$QT.xmlpatterns.bins
 
 # syncqt doesn't copy headers in tools/ so let's manually ensure
 # it works with shadow builds and source builds.
@@ -81,4 +81,3 @@ SOURCES = ASTItem.cpp                   \
           XSDTestSuiteHandler.cpp       \
           XSDTSTestCase.cpp             \
           XSLTTestSuiteHandler.cpp
-DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0
