@@ -1,31 +1,26 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 The Qt Company Ltd.
-** Contact: http://www.qt.io/licensing/
+** Copyright (C) 2016 The Qt Company Ltd.
+** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the test suite of the Qt Toolkit.
 **
-** $QT_BEGIN_LICENSE:LGPL21$
+** $QT_BEGIN_LICENSE:GPL-EXCEPT$
 ** Commercial License Usage
 ** Licensees holding valid commercial Qt licenses may use this file in
 ** accordance with the commercial license agreement provided with the
 ** Software or, alternatively, in accordance with the terms contained in
 ** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see http://www.qt.io/terms-conditions. For further
-** information use the contact form at http://www.qt.io/contact-us.
+** and conditions see https://www.qt.io/terms-conditions. For further
+** information use the contact form at https://www.qt.io/contact-us.
 **
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 2.1 or version 3 as published by the Free
-** Software Foundation and appearing in the file LICENSE.LGPLv21 and
-** LICENSE.LGPLv3 included in the packaging of this file. Please review the
-** following information to ensure the GNU Lesser General Public License
-** requirements will be met: https://www.gnu.org/licenses/lgpl.html and
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
-**
-** As a special exception, The Qt Company gives you certain additional
-** rights. These rights are described in The Qt Company LGPL Exception
-** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 3 as published by the Free Software
+** Foundation with exceptions as appearing in the file LICENSE.GPL3-EXCEPT
+** included in the packaging of this file. Please review the following
+** information to ensure the GNU General Public License requirements will
+** be met: https://www.gnu.org/licenses/gpl-3.0.html.
 **
 ** $QT_END_LICENSE$
 **
@@ -37,6 +32,10 @@
 
 #include "../qxmlquery/TestFundament.h"
 #include "../network-settings.h"
+
+#ifdef Q_OS_WIN
+#  include <qt_windows.h>
+#endif
 
 /*!
  \class tst_XmlPatterns
@@ -137,10 +136,6 @@ void tst_XmlPatterns::xquerySupport()
     if(m_dontRun)
         QSKIP("The command line utility is not in the path.");
 
-#ifdef Q_OS_WINCE
-    QSKIP("WinCE: This test uses unsupported WinCE functionality");
-#endif
-
 #ifndef QT_NO_PROCESS
     QFETCH(int,         expectedExitCode);
     QFETCH(QByteArray,  expectedQueryOutput);
@@ -152,6 +147,10 @@ void tst_XmlPatterns::xquerySupport()
 
     if(!cwd.isEmpty())
         process.setWorkingDirectory(inputFile(cwd));
+
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.insert("QT_LOGGING_RULES", "qt.network.ssl=false");
+    process.setProcessEnvironment(env);
 
     process.start(m_command, arguments);
     QVERIFY2(process.waitForStarted(), msgProcessError("Failed to start", process).constData());
@@ -235,10 +234,6 @@ void tst_XmlPatterns::xquerySupport()
 
 void tst_XmlPatterns::xquerySupport_data() const
 {
-#if defined(Q_OS_WINCE)
-    return;
-#endif
-
     QString path = QFINDTESTDATA("queries/");
 
     /* Check one file for existence, to avoid possible false positives. */
@@ -822,8 +817,10 @@ void tst_XmlPatterns::removeNonWritable(QFile &outFile)
  */
 void tst_XmlPatterns::stdoutFailure() const
 {
+#ifdef QT_NO_PROCESS
+    QSKIP("Skipping test due to not having process support");
+#else
     return; // TODO It's really hard to write testing code for this.
-#ifndef QT_NO_PROCESS
 
     const QString outName(QLatin1String("stdoutFailure.out"));
     createNonWritable(outName);
@@ -845,8 +842,6 @@ void tst_XmlPatterns::stdoutFailure() const
     QCOMPARE(process.exitCode(), 1);
 
     removeNonWritable(outFile);
-#else
-    QSKIP("Skipping test due to not having process support");
 #endif // QT_NO_PROCESS
 }
 
@@ -876,10 +871,6 @@ void tst_XmlPatterns::xsltSupport_data() const
 {
     if(m_dontRun)
         QSKIP("The command line utility is not in the path.");
-
-#ifdef Q_OS_WINCE
-    QSKIP("WinCE: This test uses unsupported WinCE functionality");
-#endif
 
     QString spath = QFINDTESTDATA("stylesheets/");
     QString qpath = QFINDTESTDATA("queries/");
@@ -1041,7 +1032,7 @@ void tst_XmlPatterns::xsltSupport_data() const
 */
 QString tst_XmlPatterns::filterStderr(const QString &in)
 {
-    static QList<QRegExp> irrelevant = QList<QRegExp>()
+    static const QList<QRegExp> irrelevant = QList<QRegExp>()
 
         // specific filenames
         << QRegExp(QLatin1String("file:\\/\\/.*(\\.xq|\\.gccxml|\\.xml|\\.xsl|-)(,|:)"))
@@ -1049,12 +1040,18 @@ QString tst_XmlPatterns::filterStderr(const QString &in)
         // warning messages about old-style plugins
         << QRegExp(QLatin1String("Old plugin format found in lib [^\n]+\n"))
         << QRegExp(QLatin1String("Qt plugin loader: Compatibility plugin [^\n]+\n"))
+        << QRegExp(QLatin1String("Unimplemented code.\n"))
     ;
 
     QString out = in;
-    foreach (const QRegExp& rx, irrelevant) {
+    for (const QRegExp& rx : irrelevant)
         out = out.remove(rx);
-    }
+
+#ifdef Q_OS_WIN
+    // replace some Win32 error messages by standard Unix ones
+    out.replace(qt_error_string(ERROR_FILE_NOT_FOUND), "No such file or directory");
+    out.replace(qt_error_string(ERROR_PATH_NOT_FOUND), "No such file or directory");
+#endif
 
     return out;
 }

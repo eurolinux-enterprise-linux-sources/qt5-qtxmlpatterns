@@ -1,31 +1,37 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 The Qt Company Ltd.
-** Contact: http://www.qt.io/licensing/
+** Copyright (C) 2016 The Qt Company Ltd.
+** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the QtXmlPatterns module of the Qt Toolkit.
 **
-** $QT_BEGIN_LICENSE:LGPL21$
+** $QT_BEGIN_LICENSE:LGPL$
 ** Commercial License Usage
 ** Licensees holding valid commercial Qt licenses may use this file in
 ** accordance with the commercial license agreement provided with the
 ** Software or, alternatively, in accordance with the terms contained in
 ** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see http://www.qt.io/terms-conditions. For further
-** information use the contact form at http://www.qt.io/contact-us.
+** and conditions see https://www.qt.io/terms-conditions. For further
+** information use the contact form at https://www.qt.io/contact-us.
 **
 ** GNU Lesser General Public License Usage
 ** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 2.1 or version 3 as published by the Free
-** Software Foundation and appearing in the file LICENSE.LGPLv21 and
-** LICENSE.LGPLv3 included in the packaging of this file. Please review the
-** following information to ensure the GNU Lesser General Public License
-** requirements will be met: https://www.gnu.org/licenses/lgpl.html and
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** General Public License version 3 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL3 included in the
+** packaging of this file. Please review the following information to
+** ensure the GNU Lesser General Public License version 3 requirements
+** will be met: https://www.gnu.org/licenses/lgpl-3.0.html.
 **
-** As a special exception, The Qt Company gives you certain additional
-** rights. These rights are described in The Qt Company LGPL Exception
-** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
+** GNU General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 2.0 or (at your option) the GNU General
+** Public license version 3 or any later version approved by the KDE Free
+** Qt Foundation. The licenses are as published by the Free Software
+** Foundation and appearing in the file LICENSE.GPL2 and LICENSE.GPL3
+** included in the packaging of this file. Please review the following
+** information to ensure the GNU General Public License requirements will
+** be met: https://www.gnu.org/licenses/gpl-2.0.html and
+** https://www.gnu.org/licenses/gpl-3.0.html.
 **
 ** $QT_END_LICENSE$
 **
@@ -386,25 +392,17 @@ bool XsdParticleChecker::isUPAConform(const XsdParticle::Ptr &particle, const Na
 
     // the basic idea of that algorithm is to iterate over all states of that machine and check that no two edges
     // that match on the same term leave a state, so for a given term it should always be obvious which edge to take
-    QHashIterator<XsdStateMachine<XsdTerm::Ptr>::StateId, XsdStateMachine<XsdTerm::Ptr>::StateType> stateIt(states);
-    while (stateIt.hasNext()) { // iterate over all states
-        stateIt.next();
-
+    for (auto stateIt = states.cbegin(), end = states.cend(); stateIt != end; ++stateIt) {
         // fetch all transitions the current state allows
         const QHash<XsdTerm::Ptr, QVector<XsdStateMachine<XsdTerm::Ptr>::StateId> > currentTransitions = transitions.value(stateIt.key());
-        QHashIterator<XsdTerm::Ptr, QVector<XsdStateMachine<XsdTerm::Ptr>::StateId> > transitionIt(currentTransitions);
-        while (transitionIt.hasNext()) { // iterate over all transitions
-            transitionIt.next();
-
+        for (auto transitionIt = currentTransitions.cbegin(), end = currentTransitions.cend(); transitionIt != end; ++transitionIt) {
             if (transitionIt.value().size() > 1) {
                 // we have one state with two edges leaving it, that means
                 // the XsdTerm::Ptr exists twice, that is an error
                 return false;
             }
 
-            QHashIterator<XsdTerm::Ptr, QVector<XsdStateMachine<XsdTerm::Ptr>::StateId> > innerTransitionIt(currentTransitions);
-            while (innerTransitionIt.hasNext()) { // iterate over all transitions again, as we have to compare all transitions with all
-                innerTransitionIt.next();
+            for (auto innerTransitionIt = currentTransitions.cbegin(), end = currentTransitions.cend(); innerTransitionIt != end; ++innerTransitionIt) {
 
                 if (transitionIt.key() == innerTransitionIt.key()) // do no compare with ourself
                     continue;
@@ -510,17 +508,13 @@ bool XsdParticleChecker::subsumes(const XsdParticle::Ptr &particle, const XsdPar
         const QPair<XsdStateMachine<XsdTerm::Ptr>::StateId, XsdStateMachine<XsdTerm::Ptr>::StateId> set = workSet.takeFirst();
 
         const QHash<XsdTerm::Ptr, QVector<XsdStateMachine<XsdTerm::Ptr>::StateId> > derivedTrans = derivedTransitions.value(set.second);
-        QHashIterator<XsdTerm::Ptr, QVector<XsdStateMachine<XsdTerm::Ptr>::StateId> > derivedIt(derivedTrans);
 
         const QHash<XsdTerm::Ptr, QVector<XsdStateMachine<XsdTerm::Ptr>::StateId> > baseTrans = baseTransitions.value(set.first);
 
-        while (derivedIt.hasNext()) {
-            derivedIt.next();
+        for (auto derivedIt = derivedTrans.cbegin(), end = derivedTrans.cend(); derivedIt != end; ++derivedIt) {
 
             bool found = false;
-            QHashIterator<XsdTerm::Ptr, QVector<XsdStateMachine<XsdTerm::Ptr>::StateId> > baseIt(baseTrans);
-            while (baseIt.hasNext()) {
-                baseIt.next();
+            for (auto baseIt = baseTrans.cbegin(), end = baseTrans.cend(); baseIt != end; ++baseIt) {
                 if (derivedTermValid(baseIt.key(), derivedIt.key(), particlesHash, context, errorMsg)) {
                     const QPair<XsdStateMachine<XsdTerm::Ptr>::StateId, XsdStateMachine<XsdTerm::Ptr>::StateId> endSet =
                              qMakePair<XsdStateMachine<XsdTerm::Ptr>::StateId, XsdStateMachine<XsdTerm::Ptr>::StateId>(baseIt.value().first(), derivedIt.value().first());
@@ -540,10 +534,7 @@ bool XsdParticleChecker::subsumes(const XsdParticle::Ptr &particle, const XsdPar
     }
 
     // 5)
-    QHashIterator<XsdStateMachine<XsdTerm::Ptr>::StateId, XsdStateMachine<XsdTerm::Ptr>::StateType> it(derivedStates);
-    while (it.hasNext()) {
-        it.next();
-
+    for (auto it = derivedStates.cbegin(), end = derivedStates.cend(); it != end; ++it) {
         if (it.value() == XsdStateMachine<XsdTerm::Ptr>::EndState || it.value() == XsdStateMachine<XsdTerm::Ptr>::StartEndState) {
             for (int i = 0; i < processedSet.count(); ++i) {
                 if (processedSet.at(i).second == it.key() &&
